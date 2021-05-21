@@ -19,35 +19,25 @@ final class GameLogic: ObservableObject {
     }
     
     typealias BlockMatrixType = BlockMatrix<IdentifiedBlock>
+        
+    @Published private(set) var blockMatrix: BlockMatrixType
     
-    let objectWillChange = PassthroughSubject<GameLogic, Never>()
+//    fileprivate var globalID: Int {
+//
+//    }
     
-    fileprivate var _blockMatrix: BlockMatrixType!
-    var blockMatrix: BlockMatrixType {
-        return _blockMatrix
-    }
-    
-    fileprivate var _globalID = 0
-    fileprivate var newGlobalID: Int {
-        _globalID += 1
-        return _globalID
+    private var globalID = 0
+    private var newGlobalID: Int {
+        globalID += 1
+        return globalID
     }
     
     init() {
-        newGame()
-    }
-    
-    func newGame() {
-        _blockMatrix = BlockMatrixType()
+        blockMatrix = BlockMatrixType()
         generateNewBlocks()
-        
-        objectWillChange.send(self)
     }
-    
+        
     func move(_ direction: Direction) {
-        defer {
-            objectWillChange.send(self)
-        }
         
         var moved = false
         
@@ -57,7 +47,7 @@ final class GameLogic: ObservableObject {
             var compactRow = [IdentifiedBlock]()
             for col in 0..<4 {
                 // Transpose if necessary.
-                if let block = _blockMatrix[axis ? (col, row) : (row, col)] {
+                if let block = blockMatrix[axis ? (col, row) : (row, col)] {
                     rowSnapshot.append(block)
                     compactRow.append(block)
                 }
@@ -82,7 +72,7 @@ final class GameLogic: ObservableObject {
                 if rowSnapshot[$0]?.number != $1?.number {
                     moved = true
                 }
-                _blockMatrix.place($1, to: axis ? ($0, row) : (row, $0))
+                blockMatrix.place($1, to: axis ? ($0, row) : (row, $0))
             }
         }
         
@@ -123,7 +113,7 @@ final class GameLogic: ObservableObject {
         for rowIndex in 0..<4 {
             for colIndex in 0..<4 {
                 let index = (colIndex, rowIndex)
-                if _blockMatrix[index] == nil {
+                if blockMatrix[index] == nil {
                     blankLocations.append(index)
                 }
             }
@@ -134,13 +124,13 @@ final class GameLogic: ObservableObject {
         }
         
         // Don't forget to sync data.
-        defer {
-            objectWillChange.send(self)
-        }
+//        defer {
+//            objectWillChange.send(self)
+//        }
         
         // Place the first block.
         var placeLocIndex = Int.random(in: 0..<blankLocations.count)
-        _blockMatrix.place(IdentifiedBlock(id: newGlobalID, number: 2), to: blankLocations[placeLocIndex])
+        blockMatrix.place(IdentifiedBlock(id: newGlobalID, number: 2), to: blankLocations[placeLocIndex])
         
         // Place the second block.
         guard let lastLoc = blankLocations.last else {
@@ -148,7 +138,7 @@ final class GameLogic: ObservableObject {
         }
         blankLocations[placeLocIndex] = lastLoc
         placeLocIndex = Int.random(in: 0..<(blankLocations.count - 1))
-        _blockMatrix.place(IdentifiedBlock(id: newGlobalID, number: 2), to: blankLocations[placeLocIndex])
+        blockMatrix.place(IdentifiedBlock(id: newGlobalID, number: 2), to: blankLocations[placeLocIndex])
         
         return true
     }
